@@ -1,7 +1,7 @@
 module API::V1
   class ListsController < BaseController
 
-    swagger_path '/lists' do
+    swagger_path '/lists/{list_id}/cards' do
       operation :get do
         key :description, 'List lists'
         key :tags, ['lists']
@@ -60,7 +60,7 @@ module API::V1
       render json: { lists: lists_hash, pagination: pagination_meta(lists) }
     end
 
-    swagger_path '/lists' do
+    swagger_path '/lists/{list_id}/cards' do
       operation :post do
         key :description, 'Create List'
         key :tags, ['lists']
@@ -114,7 +114,7 @@ module API::V1
       end
     end
 
-    swagger_path '/lists/{id}' do
+    swagger_path '/lists/{list_id}/cards/{id}' do
       operation :put do
         key :description, 'Create List'
         key :tags, ['lists']
@@ -186,7 +186,7 @@ module API::V1
       end
     end
 
-    swagger_path '/lists/{id}' do
+    swagger_path '/lists/{list_id}/cards/{id}' do
       operation :get do
         key :description, 'List Details'
         key :tags, ['lists']

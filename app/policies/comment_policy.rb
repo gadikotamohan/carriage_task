@@ -1,4 +1,4 @@
-class ListPolicy < ApplicationPolicy
+class CommentPolicy < ApplicationPolicy
   attr_reader :user, :record
 
   def initialize(user, record)
@@ -11,10 +11,9 @@ class ListPolicy < ApplicationPolicy
   end
 
   def create?
-    user.role_admin?
+    true
   end
 
-  # Member can assign or unassign on his own list
   def update?
     true
   end
@@ -25,7 +24,7 @@ class ListPolicy < ApplicationPolicy
       if user.role_admin?
         scope
       else
-        user.lists
+        user.comments
       end
     end
   end

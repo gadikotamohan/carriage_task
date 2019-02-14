@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_02_14_154807) do
+ActiveRecord::Schema.define(version: 2019_02_14_175557) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -27,10 +27,36 @@ ActiveRecord::Schema.define(version: 2019_02_14_154807) do
     t.index ["user_id"], name: "index_authentications_on_user_id"
   end
 
+  create_table "cards", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.text "title"
+    t.text "description"
+    t.integer "comments_count", default: 0
+    t.uuid "list_id"
+    t.uuid "user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["list_id"], name: "index_cards_on_list_id"
+    t.index ["user_id"], name: "index_cards_on_user_id"
+  end
+
+  create_table "comments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.text "content"
+    t.uuid "user_id"
+    t.uuid "parent_id"
+    t.uuid "resource_id"
+    t.string "resource_type"
+    t.integer "replies_count", default: 0
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parent_id"], name: "index_comments_on_parent_id"
+    t.index ["user_id"], name: "index_comments_on_user_id"
+  end
+
   create_table "lists", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "title"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "comments_count", default: 0
   end
 
   create_table "lists_users", id: false, force: :cascade do |t|
@@ -64,6 +90,10 @@ ActiveRecord::Schema.define(version: 2019_02_14_154807) do
   end
 
   add_foreign_key "authentications", "users"
+  add_foreign_key "cards", "lists"
+  add_foreign_key "cards", "users"
+  add_foreign_key "comments", "comments", column: "parent_id", name: "parent_id_comment_id"
+  add_foreign_key "comments", "users"
   add_foreign_key "sessions", "authentications"
   add_foreign_key "sessions", "users"
 end
