@@ -1,0 +1,34 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: 10
+  timeout: 5000
+
+development:
+  <<: *default
+  database: try_carriage_development
+
+test:
+  <<: *default
+  database: try_carriage_test
+
+dev:
+  <<: *default
+  database: <%= Figaro.env.database_name %>
+
+staging:
+  <<: *default
+  database: <%= Figaro.env.rds_db_name || Figaro.env.database_name %>
+  host: <%= Figaro.env.rds_hostname || Figaro.env.database_host %>
+  port: <%= Figaro.env.rds_port || Figaro.env.database_port %>
+  username: <%= Figaro.env.rds_username || Figaro.env.database_username %>
+  password: <%= Figaro.env.rds_password || Figaro.env.database_password %>
+
+production:
+  <<: *default
+  database: <%= Figaro.env.rds_db_name || Figaro.env.database_name %>
+  host: <%= Figaro.env.rds_hostname || Figaro.env.database_host %>
+  port: <%= Figaro.env.rds_port || Figaro.env.database_port %>
+  username: <%= Figaro.env.rds_username || Figaro.env.database_username %>
+  password: <%= Figaro.env.rds_password || Figaro.env.database_password %>
+
