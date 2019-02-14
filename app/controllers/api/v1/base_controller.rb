@@ -54,7 +54,11 @@ module API::V1
 
     def session_params
       @session_params ||= current_user.current_session&.as_json&.extract!('client_name', 'app_version')
-    end    
+    end
+
+    def not_found
+      raise ActionController::RoutingError.new('Not Found')
+    end
 
   end
 end

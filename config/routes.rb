@@ -11,6 +11,7 @@ Rails.application.routes.draw do
         end
       end
       resources :users, only: :index
+      resources :lists
     end
   end
 end

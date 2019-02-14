@@ -1,4 +1,4 @@
-class UserPolicy < ApplicationPolicy
+class ListPolicy < ApplicationPolicy
   attr_reader :user, :record
 
   def initialize(user, record)
@@ -10,13 +10,21 @@ class UserPolicy < ApplicationPolicy
     true
   end
 
+  def create?
+    user.role_admin?
+  end
+
+  def update?
+    create?
+  end
+
   class Scope < Scope
     attr_reader :user, :scope
     def resolve
       if user.role_admin?
         scope
       else
-        scope.where(id: user.id)
+        user.send(scope.to_s.underscore.pluralize)
       end
     end
   end

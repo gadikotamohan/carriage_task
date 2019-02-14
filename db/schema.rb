@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_02_14_114950) do
+ActiveRecord::Schema.define(version: 2019_02_14_154807) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -29,10 +29,15 @@ ActiveRecord::Schema.define(version: 2019_02_14_114950) do
 
   create_table "lists", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "title"
-    t.uuid "user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["user_id"], name: "index_lists_on_user_id"
+  end
+
+  create_table "lists_users", id: false, force: :cascade do |t|
+    t.uuid "list_id", null: false
+    t.uuid "user_id", null: false
+    t.index ["list_id", "user_id"], name: "index_lists_users_on_list_id_and_user_id", unique: true
+    t.index ["user_id", "list_id"], name: "index_lists_users_on_user_id_and_list_id", unique: true
   end
 
   create_table "sessions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -59,7 +64,6 @@ ActiveRecord::Schema.define(version: 2019_02_14_114950) do
   end
 
   add_foreign_key "authentications", "users"
-  add_foreign_key "lists", "users"
   add_foreign_key "sessions", "authentications"
   add_foreign_key "sessions", "users"
 end

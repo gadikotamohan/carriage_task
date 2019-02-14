@@ -43,9 +43,20 @@ module API::V1
       API::V1::AuthController,
       API::V1::Auth::BasicAuthController,
       API::V1::UsersController,
+      API::V1::ListsController,
       self
     ].freeze
 
+
+    swagger_schema :ListData do
+      property :id, type: :string
+      property :title, type: :string
+    end
+
+    swagger_schema :ListDetails do
+      property :id, type: :string
+      property :title, type: :string
+    end
 
     swagger_schema :User do
       property :id, type: :string
