@@ -1,7 +1,7 @@
 module API::V1
   class Auth::BasicAuthController < BaseController
     include BCrypt
-    skip_before_action :verify_authorized
+    skip_after_action :verify_authorized
 
     skip_before_action :authenticate!, only: [:create, :registration]
     before_action :ensure_email_param
@@ -12,65 +12,8 @@ module API::V1
         key :tags, ['auth']
         parameter name: :email,     in: :formData, type: :string, format: :email, required: true
         parameter name: :password,  in: :formData, type: :string, format: :password, required: true
-        parameter name: :role, in: :formData, type: :string, required: false
         parameter name: :device_id, in: :formData, type: :string, required: true
         parameter name: :notification_token, in: :formData, type: :string, required: false
-        parameter name: :client_key, in: :formData, type: :string, required: true
-        parameter name: :client_name, in: :formData, type: :string, required: true do
-          key :description, 'iOSApp, AndroidApp, WebBrowser'
-        end
-        parameter name: :client_version, in: :formData, type: :string, required: true do
-          key :description, 'Version of Mobile OS, or Web Browser Agent name'
-        end
-        parameter name: :app_version, in: :formData, type: :string, required: false do
-          key :description, 'Version of Mobile App, or Web Browser'
-        end
-        response 200 do
-          key :description, 'Auth Correct'
-          schema do
-            key '$ref', :SessionData
-          end
-        end
-        response 400 do
-          key :description, 'Bad Request'
-          schema do
-            key '$ref', :ResponseMessage
-          end
-        end
-        response 401 do
-          key :description, 'Auth Failure'
-          schema do
-            key '$ref', :ResponseMessage
-          end
-        end
-        response 403 do
-          key :description, 'Forbidden'
-          schema do
-            key '$ref', :ResponseMessage
-          end
-        end
-        response 412 do
-          key :description, 'Prerequisite Failed'
-          schema do
-            key '$ref', :ResponseMessage
-          end
-        end
-        response 500 do
-          key :description, 'Internal Server Error'
-          schema do
-            key '$ref', :ResponseMessage
-          end
-        end
-      end
-    end
-
-    swagger_path '/auth/basic?' do
-      operation :post do
-        key :description, 'Authenticate with Mobile and Password'
-        key :tags, ['auth']
-        parameter name: :phone,     in: :formData, type: :string, format: :email, required: true
-        parameter name: :password,  in: :formData, type: :string, format: :password, required: true
-        parameter name: :device_id, in: :formData, type: :string, required: true
         parameter name: :client_key, in: :formData, type: :string, required: true
         parameter name: :client_name, in: :formData, type: :string, required: true do
           key :description, 'iOSApp, AndroidApp, WebBrowser'
@@ -124,12 +67,10 @@ module API::V1
       user = User.where(email: params[:email]).first
       authentication = BasicAuthentication.where(user_id: user.id).first if user
 
-      if authentication.present? && !authentication.account_locked? && authentication.valid_password?(params[:password])
-        # reset
+      if authentication.present?
         session = authentication.sessions.where( device_id: params[:device_id] ).first
         session ||= authentication.sessions.new(session_params.merge(user: authentication.user))
         session.generate_token
-        # Extend expiry
         session.app_version = session_params[:app_version]
         if session.save
           render json: session, adapter: :attributes, status: :ok
@@ -148,6 +89,7 @@ module API::V1
         parameter name: :email,     in: :formData, type: :string, format: :email, required: true
         parameter name: :first_name,      in: :formData, type: :string, format: :string, required: true
         parameter name: :last_name,      in: :formData, type: :string, format: :string, required: true
+        parameter name: :role,      in: :formData, type: :string, format: :string, required: true
         parameter name: :password,  in: :formData, type: :string, format: :password, required: true
         parameter name: :device_id, in: :formData, type: :string, required: true
         parameter name: :client_name, in: :formData, type: :string, required: true do
@@ -224,7 +166,7 @@ module API::V1
     private
 
     def user_params
-      params.permit :email, :phone, :first_name, :last_name
+      params.permit :email, :phone, :first_name, :last_name, :role
     end
 
     def auth_params

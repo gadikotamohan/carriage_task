@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_02_14_175557) do
+ActiveRecord::Schema.define(version: 2019_02_15_075415) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -74,6 +74,7 @@ ActiveRecord::Schema.define(version: 2019_02_14_175557) do
     t.string "device_id"
     t.string "client_name"
     t.string "client_version"
+    t.string "app_version"
     t.index ["authentication_id"], name: "index_sessions_on_authentication_id"
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end

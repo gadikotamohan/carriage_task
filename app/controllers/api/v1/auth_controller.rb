@@ -1,6 +1,6 @@
 module API::V1
   class AuthController < BaseController
-    skip_before_action :verify_authorized
+    skip_after_action :verify_authorized
     skip_before_action :authenticate!, only: [:test]
 
     swagger_path '/auth' do

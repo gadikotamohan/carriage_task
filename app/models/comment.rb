@@ -15,6 +15,7 @@ class Comment < ApplicationRecord
 
     def comment_object
       parent = Comment.find_by(id: parent_id)
+      binding.pry
       if parent.blank? && resource.blank?
         errors.add(:parent_id, "parent_id or resource should not be null")
       end
