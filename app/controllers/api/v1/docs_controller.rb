@@ -72,7 +72,36 @@ module API::V1
       property :id, type: :string
       property :title, type: :string
       property :description, type: :string
+      property :comments, type: :object do
+        key :'$ref', :CommentData
+      end
     end
+
+    swagger_schema :CommentData do
+      property :id, type: :string
+      property :user, type: :object do
+        key :'$ref', :User
+      end
+    end
+
+
+    swagger_schema :CommentDetails do
+      property :id, type: :string
+      property :content, type: :string
+      property :user, type: :object do
+        key :'$ref', :User
+      end
+      property :replies, type: :array do
+        items do
+          key :'$ref', :CommentData
+        end
+      end
+      property :parent, type: :object do
+        key :'$ref', :CommentData
+      end
+    end
+
+
 
     swagger_schema :User do
       property :id, type: :string
