@@ -5,7 +5,8 @@ class User < ApplicationRecord
   has_many :sessions, dependent: :destroy#, counter_cache: true
   has_many :cards, dependent: :destroy
   has_many :comments, dependent: :destroy
-  has_and_belongs_to_many :lists
+  has_many :list_users
+  has_many :lists, through: :list_users
 
   validates :email, :first_name, :last_name, presence: true
 

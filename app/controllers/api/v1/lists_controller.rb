@@ -1,5 +1,6 @@
 module API::V1
   class ListsController < BaseController
+    before_action :load_and_authorize, only: [:show, :update, :destroy]
 
     swagger_path '/lists' do
       operation :get do
@@ -177,9 +178,6 @@ module API::V1
     end
 
     def update
-      # ActiveRecord::RecordNotUnique
-      list = policy_scope(List).where(id: params[:id]).first or not_found
-      authorize list
       if list.update(list_params)
         render json: list, serializer: ListDetailsSerializer
       else
@@ -231,9 +229,7 @@ module API::V1
       end
     end
 
-    def show
-      list = policy_scope(List).where(id: params[:id]).first or not_found
-      authorize list      
+    def show 
       render json: list, serializer: ListDetailsSerializer
     end
 
@@ -282,8 +278,6 @@ module API::V1
     end
 
     def destroy
-      list = policy_scope(List).where(id: params[:id]).first or not_found
-      authorize list
       list.destroy
       if list.persisted?
         render json: { message: "Unable to delete list", errors: list.errors.full_messages}, status: :bad_request
@@ -295,6 +289,14 @@ module API::V1
     private
       def list_params
         params.permit :title, add_user_ids: [], remove_user_ids: []
+      end
+
+      def list
+        @list ||= policy_scope(List).where(id: params[:id]).first or not_found        
+      end
+
+      def load_and_authorize
+        authorize list 
       end
 
   end

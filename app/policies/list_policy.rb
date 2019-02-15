@@ -14,13 +14,12 @@ class ListPolicy < ApplicationPolicy
     user.role_admin?
   end
 
-  # Member can assign or unassign on his own list
   def update?
-    user.role_admin? && user.list_ids.include?(record.id)
+    user.role_admin? && user.lists.where('lists.id = ?', record.id)
   end
 
   def destroy?
-    user.role_admin? && user.list_ids.include?(record.id)
+    update?
   end
 
   class Scope < Scope

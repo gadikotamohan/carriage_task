@@ -11,7 +11,14 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def create?
-    true
+    flag = false
+    return true if user.role_admin?
+    parent = record.parent || record
+
+    if parent.resource.class == Card
+      flag = !user.lists_users.where(list_id: parent.resource_id).count.zero?
+    end
+    flag
   end
 
   def update?
@@ -24,7 +31,7 @@ class CommentPolicy < ApplicationPolicy
       if user.role_admin?
         scope
       else
-        user.comments
+        Comment.left_join(:replies).where(user_id: user.id)
       end
     end
   end

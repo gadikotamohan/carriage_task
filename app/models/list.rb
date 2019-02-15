@@ -2,7 +2,8 @@ class List < ApplicationRecord
   validates :title, presence: true
 
   has_many :cards, dependent: :destroy
-  has_and_belongs_to_many :users
+  has_many :list_users
+  has_many :users, through: :list_users
 
   attr_accessor :remove_user_ids, :add_user_ids
 

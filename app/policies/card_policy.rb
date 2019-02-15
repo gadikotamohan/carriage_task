@@ -11,12 +11,15 @@ class CardPolicy < ApplicationPolicy
   end
 
   def create?
-    true
+    user.role_admin? || !user.list_users.where(list_id: record.list_id).count.zero?
   end
 
-  # Member can assign or unassign on his own list
   def update?
-    true
+    record.user_id == user.id
+  end
+
+  def destroy?
+    update?
   end
 
   class Scope < Scope
@@ -25,7 +28,7 @@ class CardPolicy < ApplicationPolicy
       if user.role_admin?
         scope
       else
-        user.cards
+        Card.joins(:list => :list_users).where('lists_users.user_id = :user_id or cards.user_id = :user_id', {user_id: user.id })
       end
     end
   end

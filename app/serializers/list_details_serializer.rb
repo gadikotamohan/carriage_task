@@ -3,7 +3,7 @@ class ListDetailsSerializer < ActiveModel::Serializer
   attribute :cards
 
   def cards
-    cards = self.object.cards.order(comments_count: :desc)
+    cards = self.object.cards.comments_ordered
     ActiveModel::Serializer::CollectionSerializer.new(cards, serializer: CardInfoSerializer, root: false)
   end
 end

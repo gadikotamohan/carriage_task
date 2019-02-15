@@ -1,6 +1,7 @@
 module API::V1
   class Auth::BasicAuthController < BaseController
     include BCrypt
+    skip_before_action :verify_authorized
 
     skip_before_action :authenticate!, only: [:create, :registration]
     before_action :ensure_email_param
@@ -11,6 +12,7 @@ module API::V1
         key :tags, ['auth']
         parameter name: :email,     in: :formData, type: :string, format: :email, required: true
         parameter name: :password,  in: :formData, type: :string, format: :password, required: true
+        parameter name: :role, in: :formData, type: :string, required: false
         parameter name: :device_id, in: :formData, type: :string, required: true
         parameter name: :notification_token, in: :formData, type: :string, required: false
         parameter name: :client_key, in: :formData, type: :string, required: true

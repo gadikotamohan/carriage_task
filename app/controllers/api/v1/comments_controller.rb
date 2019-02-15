@@ -1,5 +1,6 @@
 module API::V1
   class CommentsController < BaseController
+    before_action :load_and_authorize, only: [:update, :show, :destroy]
     before_action :mandate_resource_type, only: :index
 
     swagger_path '/comments' do
@@ -57,7 +58,7 @@ module API::V1
     end
 
     def index
-      comments = policy_scope(Comment).where(resource_type: params[:resource_type].classify).page(params[:page])
+      comments = policy_scope(Comment).includes(:user).where(resource_type: params[:resource_type].classify).page(params[:page])
       comments.without_count
       comments_hash = ActiveModel::Serializer::CollectionSerializer.new(comments, serializer: CommentInfoSerializer)
       render json: { comments: comments_hash, pagination: pagination_meta(comments) }
@@ -113,6 +114,7 @@ module API::V1
 
     def create
       comment = current_user.comments.create(comment_params)
+      authorize comment
       if comment.persisted?
         render json: comment, serializer: CommentDetailsSerializer
       else
@@ -167,11 +169,8 @@ module API::V1
     end
 
     def update
-      comment = policy_scope(Comment).where(id: params[:id]).first or not_found
       comment_params.delete :resource_type
       comment_params.delete :resource_id
-      comment.update(comment_params)
-
       if comment.update(comment_params)
         render json: comment, serializer: CommentDetailsSerializer
       else
@@ -224,8 +223,61 @@ module API::V1
     end
 
     def show
-      comment = policy_scope(Comment).where(id: params[:id]).first or not_found
       render json: comment, serializer: CommentDetailsSerializer
+    end
+
+
+    swagger_path '/comments/{id}' do
+      operation :delete do
+        key :description, 'Delete Comment'
+        key :tags, ['comments']
+        parameter name: :id, in: :path, type: :string, format: :string, required: true
+        response 200 do
+          key :description, 'Success'
+          schema do
+            key '$ref', :ResponseMessage
+          end
+        end
+        response 400 do
+          key :description, 'Bad Request'
+          schema do
+            key '$ref', :ResponseMessage
+          end
+        end
+        response 401 do
+          key :description, 'Auth Failure'
+          schema do
+            key '$ref', :ResponseMessage
+          end
+        end
+        response 403 do
+          key :description, 'Forbidden'
+          schema do
+            key '$ref', :ResponseMessage
+          end
+        end
+        response 412 do
+          key :description, 'Prerequisite Failed'
+          schema do
+            key '$ref', :ResponseMessage
+          end
+        end
+        response 500 do
+          key :description, 'Internal Server Error'
+          schema do
+            key '$ref', :ResponseMessage
+          end
+        end
+      end
+    end
+
+    def destroy
+      comment.destroy
+      if comment.persisted?
+        render json: { message: "Unable to delete comment", errors: comment.errors.full_messages}, status: :bad_request
+      else
+        render json: { message: "deleted comments", errors: []}, status: :ok
+      end
     end
 
     private
@@ -239,6 +291,14 @@ module API::V1
         end
         resource_type = params[:resource_type].classify
         Rails.const_get(resource_type) rescue not_found
+      end
+
+      def comment
+        @comment ||= policy_scope(Comment).where(id: params[:id]).first or not_found
+      end
+
+      def load_and_authorize
+        authorize comment
       end
   end
 end
