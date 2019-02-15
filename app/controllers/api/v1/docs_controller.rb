@@ -44,6 +44,8 @@ module API::V1
       API::V1::Auth::BasicAuthController,
       API::V1::UsersController,
       API::V1::ListsController,
+      API::V1::CardsController,
+      API::V1::CommentsController,
       self
     ].freeze
 
@@ -56,6 +58,20 @@ module API::V1
     swagger_schema :ListDetails do
       property :id, type: :string
       property :title, type: :string
+      property :cards, type: :object do
+        key :'$ref', :CardData
+      end
+    end
+
+    swagger_schema :CardData do
+      property :id, type: :string
+      property :title, type: :string
+    end
+
+    swagger_schema :CardDetails do
+      property :id, type: :string
+      property :title, type: :string
+      property :description, type: :string
     end
 
     swagger_schema :User do

@@ -1,18 +1,21 @@
 module API::V1
-  class ListsController < BaseController
+  class CommentsController < BaseController
+    before_action :mandate_resource_type, only: :index
 
-    swagger_path '/lists/{list_id}/cards' do
+    swagger_path '/comments' do
       operation :get do
-        key :description, 'List lists'
-        key :tags, ['lists']
+        key :description, 'List comments'
+        key :tags, ['comments']
         parameter name: :page, in: :query, type: :string, required: false
+        parameter name: :resource_type, in: :query, type: :string, required: true
+
         response 200 do
-          key :description, 'Lists'
+          key :description, 'Comments'
           schema do
-            property :lists, type: :object do
+            property :comments, type: :object do
               key :type, :array
               items do
-                key :'$ref', :ListData
+                key :'$ref', :CommentData
               end
             end
             property :pagination, type: :object do
@@ -54,22 +57,25 @@ module API::V1
     end
 
     def index
-      lists = policy_scope(List).page(params[:page])
-      lists.without_count
-      lists_hash = ActiveModel::Serializer::CollectionSerializer.new(lists, each_serializer: ListSerializer)
-      render json: { lists: lists_hash, pagination: pagination_meta(lists) }
+      comments = policy_scope(Comment).where(resource_type: params[:resource_type].classify).page(params[:page])
+      comments.without_count
+      comments_hash = ActiveModel::Serializer::CollectionSerializer.new(comments, serializer: CommentInfoSerializer)
+      render json: { comments: comments_hash, pagination: pagination_meta(comments) }
     end
 
-    swagger_path '/lists/{list_id}/cards' do
+    swagger_path '/comments' do
       operation :post do
-        key :description, 'Create List'
-        key :tags, ['lists']
-        parameter name: :title,     in: :formData, type: :string, required: true
-        parameter name: :user_id,   in: :formData, type: :string, required: false
+        key :description, 'Create Comment'
+        key :tags, ['comments']
+        parameter name: :content, in: :formData, type: :string, format: :string, required: true
+        parameter name: :resource_id, in: :formData, type: :string, format: :string, required: false
+        parameter name: :resource_type, in: :formData, type: :string, format: :string, required: false
+        parameter name: :parent_id, in: :formData, type: :string, format: :string, required: false
+
         response 200 do
           key :description, 'Success'
           schema do
-            key '$ref', :ListData
+            key '$ref', :CommentDetails
           end
         end
         response 400 do
@@ -106,41 +112,25 @@ module API::V1
     end
 
     def create
-      list = List.create(list_params)
-      if list.persisted?
-        render json: list
+      comment = current_user.comments.create(comment_params)
+      if comment.persisted?
+        render json: comment, serializer: CommentDetailsSerializer
       else
-        render json: { message: "Cannot create list", errors: list.errors.full_messages}, status: :bad_request
+        render json: { message: "Cannot create comment", errors: comment.errors.full_messages}, status: :bad_request
       end
     end
 
-    swagger_path '/lists/{list_id}/cards/{id}' do
+    swagger_path '/comments/{id}' do
       operation :put do
-        key :description, 'Create List'
-        key :tags, ['lists']
+        key :description, 'update comment'
+        key :tags, ['comments']
         parameter name: :id, in: :path, type: :string, format: :string, required: true
-        parameter name: :list, in: :body, required: true do
-          key :description, 'List body.'
-          schema do
-            property :title, type: :string, required: true
-            property :add_user_ids, type: :object do
-              key :type, :array
-              items do
-                key :'$ref', :string
-              end
-            end
-            property :remove_user_ids, type: :object do
-              key :type, :array
-              items do
-                key :'$ref', :string
-              end
-            end
-          end
-        end
+        parameter name: :content, in: :formData, type: :string, format: :string, required: true
+
         response 200 do
           key :description, 'Success'
           schema do
-            key '$ref', :ListData
+            key '$ref', :CommentDetails
           end
         end
         response 400 do
@@ -177,24 +167,27 @@ module API::V1
     end
 
     def update
-      # ActiveRecord::RecordNotUnique
-      list = policy_scope(List).where(id: params[:id]).first or not_found
-      if list.update(list_params)
-        render json: list
+      comment = policy_scope(Comment).where(id: params[:id]).first or not_found
+      comment_params.delete :resource_type
+      comment_params.delete :resource_id
+      comment.update(comment_params)
+
+      if comment.update(comment_params)
+        render json: comment, serializer: CommentDetailsSerializer
       else
-        render json: { message: "cannot update list", errors: list.errors.full_messages}, status: :bad_request
+        render json: { message: "cannot update comment/reply", errors: comment.errors.full_messages}, status: :bad_request
       end
     end
 
-    swagger_path '/lists/{list_id}/cards/{id}' do
+    swagger_path '/comments/{id}' do
       operation :get do
-        key :description, 'List Details'
-        key :tags, ['lists']
+        key :description, 'Comment Details'
+        key :tags, ['comments']
         parameter name: :id, in: :path, type: :string, format: :string, required: true
         response 200 do
           key :description, 'Success'
           schema do
-            key '$ref', :ListDetails
+            key '$ref', :CommentDetails
           end
         end
         response 400 do
@@ -231,14 +224,21 @@ module API::V1
     end
 
     def show
-      list = policy_scope(List).where(id: params[:id]).first or not_found
-      render json: list
+      comment = policy_scope(Comment).where(id: params[:id]).first or not_found
+      render json: comment, serializer: CommentDetailsSerializer
     end
 
     private
-      def list_params
-        params.permit :title, add_user_ids: [], remove_user_ids: []
+      def comment_params
+        params.permit :content, :resource_id, :resource_type, :parent_id
       end
 
+      def mandate_resource_type
+        if params[:resource_type].blank?
+          return render json: { error: "'resource_type' params is mandatory", errors: []}, status: :bad_request 
+        end
+        resource_type = params[:resource_type].classify
+        Rails.const_get(resource_type) rescue not_found
+      end
   end
 end

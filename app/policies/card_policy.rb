@@ -1,4 +1,4 @@
-class ListPolicy < ApplicationPolicy
+class CardPolicy < ApplicationPolicy
   attr_reader :user, :record
 
   def initialize(user, record)
@@ -11,16 +11,12 @@ class ListPolicy < ApplicationPolicy
   end
 
   def create?
-    user.role_admin?
+    true
   end
 
   # Member can assign or unassign on his own list
   def update?
-    user.role_admin? && user.list_ids.include?(record.id)
-  end
-
-  def destroy?
-    user.role_admin? && user.list_ids.include?(record.id)
+    true
   end
 
   class Scope < Scope
@@ -29,7 +25,7 @@ class ListPolicy < ApplicationPolicy
       if user.role_admin?
         scope
       else
-        user.lists
+        user.cards
       end
     end
   end

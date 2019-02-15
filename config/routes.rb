@@ -11,7 +11,9 @@ Rails.application.routes.draw do
         end
       end
       resources :users, only: :index
-      resources :lists
+      resources :lists, except: [:new, :edit]
+      resources :cards
+      resources :comments
     end
   end
 end

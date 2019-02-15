@@ -3,10 +3,12 @@ module API::V1
     include Swagger::Blocks
     include ActionController::HttpAuthentication::Token::ControllerMethods
     include Pundit
+    rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
+    after_action :verify_authorized, except: :index
     before_action :load_session
     before_action :authenticate!
-
+    
 
     # For action specific secret code requirment, use array of actions ['show', 'index'] as value
     SECRET_CODE_REQUIRED_PAGES=
@@ -59,6 +61,11 @@ module API::V1
     def not_found
       raise ActionController::RoutingError.new('Not Found')
     end
+
+    def user_not_authorized
+      render json: { errors: [], message: "You don't have permission to access this page" }, status: :unauthorized
+    end
+
 
   end
 end
